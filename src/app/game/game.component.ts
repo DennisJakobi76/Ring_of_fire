@@ -51,8 +51,8 @@ export class GameComponent {
 
     // Manually restore focus to the menu trigger since the element that
     // opens the dialog won't be in the DOM any more when the dialog closes.
-    dialogRef
-      .afterClosed()
-      .subscribe((result) => console.log('The dialog was closed'));
+    dialogRef.afterClosed().subscribe((name: string) => {
+      this.game.players.push(name);
+    });
   }
 }
