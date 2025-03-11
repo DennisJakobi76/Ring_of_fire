@@ -28,10 +28,6 @@ export class DialogAddPlayerComponent {
   name: string = '';
 
   onNoClick() {
-    // Code
-  }
-
-  addPlayer() {
-    console.log(this.name);
+    this.name = '';
   }
 }
