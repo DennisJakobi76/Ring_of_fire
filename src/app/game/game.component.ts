@@ -4,6 +4,13 @@ import { Game } from '../../models/game';
 import { PlayerComponent } from '../player/player.component';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
+import {
+  MatDialog,
+  MatDialogActions,
+  MatDialogClose,
+  MatDialogContent,
+} from '@angular/material/dialog';
+import { DialogAddPlayerComponent } from '../dialog-add-player/dialog-add-player.component';
 
 @Component({
   selector: 'app-game',
@@ -16,7 +23,7 @@ export class GameComponent {
   currentCard: string = '';
   game: Game;
 
-  constructor() {
+  constructor(public dialog: MatDialog) {
     this.game = new Game();
   }
 
@@ -37,5 +44,15 @@ export class GameComponent {
         this.pickCardAnimation = false;
       }, 1500);
     }
+  }
+
+  openDialog() {
+    const dialogRef = this.dialog.open(DialogAddPlayerComponent);
+
+    // Manually restore focus to the menu trigger since the element that
+    // opens the dialog won't be in the DOM any more when the dialog closes.
+    dialogRef
+      .afterClosed()
+      .subscribe((result) => console.log('The dialog was closed'));
   }
 }
