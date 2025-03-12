@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 
 @Component({
@@ -36,9 +36,17 @@ export class GameInfoComponent {
       description:
         'Pick a mate. Your mate must always drink when you drink and the other way around.',
     },
-    { title: 'Thumbmaster', description: '' },
+    {
+      title: 'Thumbmaster',
+      description:
+        'You became the Thumbmaster and can place your thumb on the table at any time — everyone must follow, and the last person to do so drinks. The role lasts until a new Thumbmaster is chosen.',
+    },
     { title: 'Men', description: 'All men drink.' },
-    { title: 'Quizmaster', description: '' },
+    {
+      title: 'Quizmaster',
+      description:
+        'You became the Quizmaster and can ask players questions — anyone who answers must drink until a new Quizmaster is chosen.',
+    },
     {
       title: 'Never have i ever...',
       description:
@@ -50,6 +58,17 @@ export class GameInfoComponent {
         'Make a rule. Everyone needs to drink when he breaks the rule.',
     },
   ];
+  title: string = '';
+  description: string = '';
+  @Input() card: string = '';
 
-  constructor() {}
+  ngOnInit() {}
+
+  ngOnChanges() {
+    if (this.card) {
+      let cardNumber = parseInt(this.card.split('_')[1]);
+      this.title = this.cardAction[cardNumber - 1].title;
+      this.description = this.cardAction[cardNumber - 1].description;
+    }
+  }
 }
