@@ -31,7 +31,7 @@ export class DialogAddPlayerComponent {
   constructor(private dialog: MatDialog) {}
 
   onNoClick() {
-    // this.name = '';
+    this.name = '';
     this.dialog.closeAll();
   }
 }
