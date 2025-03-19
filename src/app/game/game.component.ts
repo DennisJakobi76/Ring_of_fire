@@ -7,7 +7,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { DialogAddPlayerComponent } from '../dialog-add-player/dialog-add-player.component';
 import { GameInfoComponent } from '../game-info/game-info.component';
-import { AngularFirestore } from '@angular/fire/compat/firestore';
+import { Firestore, collection, collectionData } from '@angular/fire/firestore';
 
 @Component({
   selector: 'app-game',
@@ -26,13 +26,16 @@ export class GameComponent {
   currentCard: string = '';
   game: Game;
 
-  constructor(private firestore: AngularFirestore, public dialog: MatDialog) {
+  constructor(private firestore: Firestore, public dialog: MatDialog) {
     this.game = new Game();
   }
 
   ngOnInit() {
     this.newGame();
-    this.firestore.collection('games').valueChanges();
+    const gamesCollection = collection(this.firestore, 'games');
+    collectionData(gamesCollection).subscribe((games) => {
+      console.log('Game Update: ', games);
+    });
   }
 
   newGame() {
