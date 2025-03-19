@@ -8,6 +8,9 @@ import { MatDialog } from '@angular/material/dialog';
 import { DialogAddPlayerComponent } from '../dialog-add-player/dialog-add-player.component';
 import { GameInfoComponent } from '../game-info/game-info.component';
 import { Firestore, collection, collectionData } from '@angular/fire/firestore';
+import { addDoc, doc, getDoc, updateDoc } from 'firebase/firestore';
+import { ActivatedRoute } from '@angular/router';
+import { S } from '@angular/cdk/keycodes';
 
 @Component({
   selector: 'app-game',
@@ -25,32 +28,45 @@ export class GameComponent {
   pickCardAnimation: boolean = false;
   currentCard: string = '';
   game: Game;
+  gameId: string | null = null;
 
-  constructor(private firestore: Firestore, public dialog: MatDialog) {
+  constructor(
+    private route: ActivatedRoute,
+    private firestore: Firestore,
+    public dialog: MatDialog
+  ) {
     this.game = new Game();
   }
 
-  ngOnInit() {
+  async ngOnInit() {
     this.newGame();
+    this.gameId = this.route.snapshot.paramMap.get('id');
     const gamesCollection = collection(this.firestore, 'games');
-    collectionData(gamesCollection).subscribe((games) => {
-      console.log('Game Update: ', games);
-    });
+    const gameDoc = doc(gamesCollection, `/${this.gameId}`);
+    const data = await getDoc(gameDoc).then((doc) => doc.data());
+    if (data) {
+      this.game.currentPlayer = data['currentPlayer'];
+      this.game.playedCards = data['playedCards'];
+      this.game.stack = data['stack'];
+      this.game.players = data['players'];
+    }
   }
 
-  newGame() {
+  async newGame() {
     this.game = new Game();
   }
   takeCard() {
     if (!this.pickCardAnimation) {
       this.currentCard = this.game.stack.pop() ?? '';
       this.pickCardAnimation = true;
+      this.saveGame();
       this.game.currentPlayer++;
       this.game.currentPlayer =
         this.game.currentPlayer % this.game.players.length;
       setTimeout(() => {
         this.game.playedCards.push(this.currentCard);
         this.pickCardAnimation = false;
+        this.saveGame();
       }, 1500);
     }
   }
@@ -63,7 +79,14 @@ export class GameComponent {
     dialogRef.afterClosed().subscribe((name: string) => {
       if (name && name.length > 0) {
         this.game.players.push(name);
+        this.saveGame();
       }
     });
+  }
+
+  async saveGame() {
+    const gamesCollection = collection(this.firestore, 'games');
+    const gameDoc = doc(gamesCollection, `/${this.gameId}`);
+    await updateDoc(gameDoc, this.game.toJson());
   }
 }
