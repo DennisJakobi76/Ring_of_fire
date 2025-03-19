@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, OnDestroy } from '@angular/core';
 import { Game } from '../../models/game';
 import { PlayerComponent } from '../player/player.component';
 import { MatIconModule } from '@angular/material/icon';
@@ -7,10 +7,10 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { DialogAddPlayerComponent } from '../dialog-add-player/dialog-add-player.component';
 import { GameInfoComponent } from '../game-info/game-info.component';
-import { Firestore, collection, collectionData } from '@angular/fire/firestore';
+import { Firestore, collection, onSnapshot } from '@angular/fire/firestore';
 import { addDoc, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { ActivatedRoute } from '@angular/router';
-import { S } from '@angular/cdk/keycodes';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-game',
@@ -24,11 +24,10 @@ import { S } from '@angular/cdk/keycodes';
   templateUrl: './game.component.html',
   styleUrl: './game.component.scss',
 })
-export class GameComponent {
-  pickCardAnimation: boolean = false;
-  currentCard: string = '';
+export class GameComponent implements OnDestroy {
   game: Game;
   gameId: string | null = null;
+  private gameSubscription: Subscription | undefined;
 
   constructor(
     private route: ActivatedRoute,
@@ -41,31 +40,54 @@ export class GameComponent {
   async ngOnInit() {
     this.newGame();
     this.gameId = this.route.snapshot.paramMap.get('id');
-    const gamesCollection = collection(this.firestore, 'games');
-    const gameDoc = doc(gamesCollection, `/${this.gameId}`);
-    const data = await getDoc(gameDoc).then((doc) => doc.data());
-    if (data) {
-      this.game.currentPlayer = data['currentPlayer'];
-      this.game.playedCards = data['playedCards'];
-      this.game.stack = data['stack'];
-      this.game.players = data['players'];
+
+    if (this.gameId) {
+      const gamesCollection = collection(this.firestore, 'games');
+      const gameDoc = doc(gamesCollection, this.gameId);
+
+      // Subscribe to real-time updates
+      this.gameSubscription = new Subscription();
+      this.gameSubscription.add(
+        onSnapshot(gameDoc, (doc) => {
+          if (doc.exists()) {
+            const data = doc.data();
+            this.updateGameData(data);
+          }
+        })
+      );
     }
+  }
+
+  ngOnDestroy() {
+    // Clean up subscription when component is destroyed
+    if (this.gameSubscription) {
+      this.gameSubscription.unsubscribe();
+    }
+  }
+
+  private updateGameData(data: any) {
+    this.game.currentPlayer = data['currentPlayer'];
+    this.game.playedCards = data['playedCards'];
+    this.game.stack = data['stack'];
+    this.game.players = data['players'];
+    this.game.pickCardAnimation = data['pickCardAnimation'];
+    this.game.currentCard = data['currentCard'];
   }
 
   async newGame() {
     this.game = new Game();
   }
   takeCard() {
-    if (!this.pickCardAnimation) {
-      this.currentCard = this.game.stack.pop() ?? '';
-      this.pickCardAnimation = true;
-      this.saveGame();
+    if (!this.game.pickCardAnimation) {
+      this.game.currentCard = this.game.stack.pop() ?? '';
+      this.game.pickCardAnimation = true;
       this.game.currentPlayer++;
       this.game.currentPlayer =
         this.game.currentPlayer % this.game.players.length;
+      this.saveGame();
       setTimeout(() => {
-        this.game.playedCards.push(this.currentCard);
-        this.pickCardAnimation = false;
+        this.game.playedCards.push(this.game.currentCard);
+        this.game.pickCardAnimation = false;
         this.saveGame();
       }, 1500);
     }
