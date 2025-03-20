@@ -11,6 +11,7 @@ import { Firestore, collection, onSnapshot } from '@angular/fire/firestore';
 import { addDoc, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
+import { PlayerMobileComponent } from '../player-mobile/player-mobile.component';
 
 @Component({
   selector: 'app-game',
@@ -20,6 +21,7 @@ import { Subscription } from 'rxjs';
     MatIconModule,
     MatButtonModule,
     GameInfoComponent,
+    PlayerMobileComponent,
   ],
   templateUrl: './game.component.html',
   styleUrl: './game.component.scss',
